@@ -1,0 +1,8 @@
+*
+!.gitignore
+!logs/
+!database/
+logs/*
+!logs/.gitkeep
+database/*
+!database/.gitkeep

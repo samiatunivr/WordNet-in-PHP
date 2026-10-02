@@ -1,0 +1,6 @@
+User-agent: *
+Disallow: /cart
+Disallow: /ar/cart
+Disallow: /en/cart
+Disallow: /nl/cart
+Disallow: /*/checkout
