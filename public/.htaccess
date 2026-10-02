@@ -1,0 +1,38 @@
+# Apache configuration for the Asl web root.
+Options -Indexes -MultiViews
+ServerSignature Off
+
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    # Serve existing static files directly, route everything else to index.php
+    RewriteCond %{REQUEST_FILENAME} !-f
+    RewriteRule ^ index.php [L]
+</IfModule>
+
+# Never serve hidden files, backups or config-like files
+<FilesMatch "(^\.|\.(bak|old|orig|sql|sqlite|ini|log|sh|env|dist|md|lock)$|~$)">
+    Require all denied
+</FilesMatch>
+
+# Only index.php may run as PHP
+<FilesMatch "\.(php|phtml|phar|php\d)$">
+    Require all denied
+</FilesMatch>
+<Files "index.php">
+    Require all granted
+</Files>
+
+<IfModule mod_headers.c>
+    Header always set X-Content-Type-Options "nosniff"
+    <FilesMatch "\.(css|js|svg|png|jpg|webp|woff2)$">
+        Header set Cache-Control "public, max-age=604800"
+    </FilesMatch>
+</IfModule>
+
+# PWA: the service worker must always be revalidated so updates reach installed apps
+<Files "sw.js">
+    <IfModule mod_headers.c>
+        Header set Cache-Control "no-cache"
+        Header set Service-Worker-Allowed "/"
+    </IfModule>
+</Files>
