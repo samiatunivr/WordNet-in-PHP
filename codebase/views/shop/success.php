@@ -27,5 +27,10 @@
       <tr class="total"><td colspan="2"><?= e(t('cart.total')) ?></td><td class="num"><?= e(money((int) $order['total_cents'])) ?></td></tr>
     </tbody>
   </table>
+  <?php if (!empty($order['invoice_number'])): ?>
+    <p><a class="btn btn-outline" href="<?= e(Asl\Invoices::url($order, Asl\I18n::locale())) ?>" target="_blank" rel="noopener"><?= e(t('success.view_invoice')) ?></a></p>
+  <?php elseif (in_array($order['status'], ['paid', 'processing'], true)): ?>
+    <p class="hint"><?= e(t('success.invoice_coming')) ?></p>
+  <?php endif; ?>
   <a class="btn" href="<?= e(url('')) ?>"><?= e(t('cart.continue')) ?></a>
 </div>

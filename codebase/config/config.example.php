@@ -24,6 +24,17 @@ return [
     'stripe_secret_key' => 'sk_test_xxx',
     // Signing secret of the webhook endpoint pointing at {app_url}/stripe/webhook
     'stripe_webhook_secret' => 'whsec_xxx',
+    // E-mail (invoices). transport: 'smtp' (recommended), 'mail' (PHP mail()),
+    // or 'log' (development: writes .eml files to storage/mail/ instead of sending).
+    'mail_transport' => 'smtp',
+    'mail_from' => 'shop@asl.example.com',
+    'mail_from_name' => 'Asl',
+    'smtp_host' => 'smtp.example.com',
+    'smtp_port' => 587,
+    'smtp_encryption' => 'tls',   // 'tls' (STARTTLS, port 587) or 'ssl' (port 465)
+    'smtp_user' => 'shop@asl.example.com',
+    'smtp_pass' => 'change-me',
+
     // ISO currency code used for all prices.
     'currency' => 'eur',
 

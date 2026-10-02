@@ -30,6 +30,18 @@ final class I18n
         self::$locale = self::isLocale($l) ? $l : self::DEFAULT;
     }
 
+    /** Run $fn with another locale active (e.g. render an e-mail in the customer's language). */
+    public static function withLocale(string $l, callable $fn): mixed
+    {
+        $prev = self::$locale;
+        self::setLocale($l);
+        try {
+            return $fn();
+        } finally {
+            self::$locale = $prev;
+        }
+    }
+
     public static function locale(): string
     {
         return self::$locale;

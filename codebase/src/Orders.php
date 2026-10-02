@@ -76,18 +76,25 @@ final class Orders
             $update['shipping_address'] = json_encode($shipping['address'], JSON_UNESCAPED_UNICODE);
         }
 
+        Db::update('orders', $update, 'id = :id', ['id' => $order['id']]);
+
         $paymentStatus = $session['payment_status'] ?? '';
         if ($order['status'] === 'pending' && $paymentStatus === 'paid') {
             $amountOk = (int) ($session['amount_total'] ?? -1) === (int) $order['total_cents']
                 && strtolower((string) ($session['currency'] ?? '')) === $order['currency'];
-            $update['status'] = $amountOk ? 'paid' : 'review';
-            $update['paid_at'] = Db::now();
-            if (!$amountOk) {
-                $update['admin_note'] = trim($order['admin_note'] . "\nAmount/currency mismatch reported by Stripe: "
-                    . ($session['amount_total'] ?? '?') . ' ' . ($session['currency'] ?? '?'));
+            $status = $amountOk ? 'paid' : 'review';
+            $note = $amountOk ? $order['admin_note'] : trim($order['admin_note'] . "\nAmount/currency mismatch reported by Stripe: "
+                . ($session['amount_total'] ?? '?') . ' ' . ($session['currency'] ?? '?'));
+            // Atomic pending -> paid transition: if the webhook and the success
+            // page race, only one of them wins and issues the invoice.
+            $won = Db::run(
+                "UPDATE orders SET status = ?, paid_at = ?, admin_note = ?, updated_at = ? WHERE id = ? AND status = 'pending'",
+                [$status, Db::now(), $note, Db::now(), $order['id']]
+            )->rowCount() === 1;
+            if ($won && $status === 'paid') {
+                Invoices::queue((int) $order['id']);
             }
         }
-        Db::update('orders', $update, 'id = :id', ['id' => $order['id']]);
         return Db::one('SELECT * FROM orders WHERE id = ?', [$order['id']]);
     }
 

@@ -21,6 +21,33 @@ foreach (array_filter(array_map('trim', explode(';', preg_replace('/^--.*$/m', '
 }
 echo "Schema installed ($driver).\n";
 
+// Upgrades for databases created by earlier versions (safe to run repeatedly).
+$columns = $driver === 'mysql'
+    ? array_column(Db::all('SHOW COLUMNS FROM orders'), 'Field')
+    : array_column(Db::all('PRAGMA table_info(orders)'), 'name');
+$add = [
+    'invoice_number' => 'VARCHAR(30) NULL',
+    'invoice_token' => 'VARCHAR(64) NULL',
+    'invoice_date' => 'DATETIME NULL',
+    'invoice_sent_at' => 'DATETIME NULL',
+    'vat_rate_bp' => 'INTEGER NULL',
+    'vat_cents' => 'INTEGER NULL',
+    'invoice_seller' => 'TEXT NULL',
+];
+foreach ($add as $col => $type) {
+    if (!in_array($col, $columns, true)) {
+        Db::pdo()->exec("ALTER TABLE orders ADD COLUMN $col $type");
+        echo "Added orders.$col\n";
+    }
+}
+if ($driver === 'mysql') {
+    if (!Db::all("SHOW INDEX FROM orders WHERE Key_name = 'uniq_orders_invoice_number'")) {
+        Db::pdo()->exec('CREATE UNIQUE INDEX uniq_orders_invoice_number ON orders(invoice_number)');
+    }
+} else {
+    Db::pdo()->exec('CREATE UNIQUE INDEX IF NOT EXISTS uniq_orders_invoice_number ON orders(invoice_number)');
+}
+
 if (in_array('--demo', $argv, true) && (int) Db::value('SELECT COUNT(*) FROM products') === 0) {
     $now = Db::now();
     $demo = [

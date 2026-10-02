@@ -9,6 +9,7 @@ use Asl\Consent;
 use Asl\Db;
 use Asl\Http;
 use Asl\I18n;
+use Asl\Invoices;
 use Asl\Orders;
 use Asl\Products;
 use Asl\Security;
@@ -292,5 +293,31 @@ final class ShopController
                 ['name' => t('nav.cart'), 'url' => url('cart'), 'icons' => [['src' => '/assets/img/icon-192.png', 'sizes' => '192x192']]],
             ],
         ], JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT);
+    }
+
+    /** Customer-facing invoice, reachable only with the secret token from the e-mail. */
+    public function invoice(string $publicId): void
+    {
+        $this->boot();
+        $token = Http::query('t');
+        if (!preg_match('/^[a-f0-9]{24}$/', $publicId) || !preg_match('/^[a-f0-9]{64}$/', $token)) {
+            Http::abort(404);
+        }
+        $order = Db::one('SELECT * FROM orders WHERE public_id = ? AND invoice_number IS NOT NULL', [$publicId]);
+        if (!$order || !hash_equals((string) $order['invoice_token'], $token)) {
+            Http::abort(404);
+        }
+        self::sendInvoiceHeaders();
+        $data = Invoices::viewData($order, Orders::items((int) $order['id']));
+        echo View::capture('invoice/standalone', $data + ['document' => View::capture('invoice/document', $data), 'printable' => true]);
+    }
+
+    /** The invoice uses inline styles (shared with the e-mail) and carries a secret in its URL. */
+    public static function sendInvoiceHeaders(): void
+    {
+        header("Content-Security-Policy: default-src 'none'; style-src 'unsafe-inline'; img-src 'self' data:; script-src 'self'; base-uri 'none'; frame-ancestors 'none'; form-action 'none'");
+        header('Referrer-Policy: no-referrer');
+        header('Cache-Control: private, no-store');
+        header('X-Robots-Tag: noindex, nofollow');
     }
 }

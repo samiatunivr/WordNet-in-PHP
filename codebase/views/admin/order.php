@@ -63,4 +63,29 @@ use Asl\Units;
       <button class="btn" type="submit"><?= e(t('admin.save')) ?></button>
     </form>
   </section>
+  <section class="admin-section">
+    <h2><?= e(t('admin.invoice')) ?></h2>
+    <?php if ($order['invoice_number']): ?>
+      <dl class="details">
+        <dt><?= e(t('invoice.number')) ?></dt><dd dir="ltr"><strong><?= e($order['invoice_number']) ?></strong></dd>
+        <dt><?= e(t('invoice.date')) ?></dt><dd dir="ltr"><?= e($order['invoice_date']) ?> UTC</dd>
+        <dt><?= e(t('admin.invoice_emailed')) ?></dt><dd dir="ltr"><?= $order['invoice_sent_at'] ? e($order['invoice_sent_at']) . ' UTC' : '<span class="status status-review">' . e(t('admin.invoice_not_sent')) . '</span>' ?></dd>
+      </dl>
+      <p><a class="btn btn-small btn-outline" href="<?= e(admin_url('orders/' . $order['id'] . '/invoice')) ?>" target="_blank" rel="noopener"><?= e(t('admin.view_invoice')) ?></a></p>
+    <?php else: ?>
+      <p class="muted"><?= e(t('admin.invoice_none')) ?></p>
+    <?php endif; ?>
+    <?php if (in_array($order['status'], Asl\Invoices::INVOICEABLE, true)): ?>
+      <?php if (Asl\Mailer::validEmail($order['customer_email'])): ?>
+        <form method="post" action="<?= e(admin_url('orders/' . $order['id'] . '/invoice')) ?>" data-confirm="<?= e(t('admin.confirm_send_invoice', ['email' => $order['customer_email']])) ?>">
+          <?= csrf_field() ?>
+          <button class="btn btn-small" type="submit"><?= e($order['invoice_sent_at'] ? t('admin.resend_invoice') : t('admin.send_invoice')) ?></button>
+        </form>
+      <?php else: ?>
+        <p class="hint"><?= e(t('admin.invoice_no_email')) ?></p>
+      <?php endif; ?>
+    <?php else: ?>
+      <p class="hint"><?= e(t('admin.invoice_after_payment')) ?></p>
+    <?php endif; ?>
+  </section>
 </div>

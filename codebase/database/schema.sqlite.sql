@@ -67,6 +67,13 @@ CREATE TABLE IF NOT EXISTS orders (
     stripe_session_id VARCHAR(255) NULL UNIQUE,
     stripe_payment_intent VARCHAR(255) NULL,
     admin_note TEXT NOT NULL DEFAULT '',
+    invoice_number VARCHAR(30) NULL UNIQUE,
+    invoice_token VARCHAR(64) NULL,
+    invoice_date DATETIME NULL,
+    invoice_sent_at DATETIME NULL,
+    vat_rate_bp INTEGER NULL,
+    vat_cents INTEGER NULL,
+    invoice_seller TEXT NULL,
     created_at DATETIME NOT NULL,
     paid_at DATETIME NULL,
     updated_at DATETIME NOT NULL
@@ -102,4 +109,9 @@ CREATE TABLE IF NOT EXISTS settings (
 CREATE TABLE IF NOT EXISTS stripe_events (
     event_id VARCHAR(255) NOT NULL PRIMARY KEY,
     received_at DATETIME NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS counters (
+    name VARCHAR(40) NOT NULL PRIMARY KEY,
+    value INTEGER NOT NULL
 );

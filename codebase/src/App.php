@@ -12,6 +12,17 @@ final class App
     public static function run(): void
     {
         Security::sendHeaders();
+        // Invoice e-mails queued during this request are sent after the
+        // response has gone out, so customers and Stripe never wait on SMTP.
+        register_shutdown_function(static function (): void {
+            if (Invoices::hasQueue()) {
+                ignore_user_abort(true);
+                if (function_exists('fastcgi_finish_request')) {
+                    fastcgi_finish_request();
+                }
+                Invoices::flushQueue();
+            }
+        });
         $method = Http::method();
         $path = Http::path();
 
@@ -61,6 +72,7 @@ final class App
             $r->post("/$l/cookies", [$shop, 'consentSave']);
             $r->get("/$l/offline", [$shop, 'offline']);
             $r->get("/$l/manifest.webmanifest", [$shop, 'manifest']);
+            $r->get("/$l/invoice/{publicId}", [$shop, 'invoice']);
         }
 
         $a = '/' . Config::adminPath();
@@ -82,6 +94,8 @@ final class App
         $r->get("$a/orders", [$admin, 'orders']);
         $r->get("$a/orders/{id}", [$admin, 'order']);
         $r->post("$a/orders/{id}", [$admin, 'orderUpdate']);
+        $r->get("$a/orders/{id}/invoice", [$admin, 'invoiceView']);
+        $r->post("$a/orders/{id}/invoice", [$admin, 'invoiceSend']);
         $r->get("$a/texts", [$admin, 'texts']);
         $r->post("$a/texts", [$admin, 'textsSave']);
         $r->get("$a/settings", [$admin, 'settings']);

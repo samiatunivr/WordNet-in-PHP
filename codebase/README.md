@@ -50,6 +50,43 @@ Apache works out of the box through `public/.htaccess` (needs `mod_rewrite` and 
 
 Local testing: `stripe listen --forward-to localhost:8000/stripe/webhook`.
 
+## Invoices
+When Stripe confirms a payment, the order automatically gets an invoice. It is e-mailed to the customer in the language they shopped in.
+
+**Invoice number.** Numbers are sequential and have no gaps within a year (`ASL-2026-00001`, `ASL-2026-00002`, …), as Dutch/EU invoicing rules require.
+
+**What's on the invoice:**
+- your company name, address, VAT (btw) and KvK numbers
+- the customer's name and address
+- every line with quantity and unit price
+- shipping and total
+- the VAT included and the amount excluding VAT
+- a "paid via Stripe" note
+
+**VAT.** Prices include VAT. The rate is set in Admin › Settings and defaults to 9%, the Dutch rate for food. VAT, rate and seller details are frozen when the invoice is issued, so later changes to the settings never alter an invoice that has already been issued.
+
+**The e-mail:**
+- an HTML invoice with a plain-text version
+- the invoice attached as an HTML file
+- a "View invoice online" button that opens a secret-token link where the invoice can be printed or saved as PDF
+- optionally a copy (BCC) to the shop's contact e-mail
+
+**Sending happens after the response.** The invoice is sent once the webhook has already answered Stripe, so payments are never slowed down by the mail server.
+
+**Admin › Orders › (order)** shows the invoice number and when it was e-mailed, and has **View / print invoice** and **Send / Resend invoice** buttons. When you approve an order manually (e.g. one marked "Needs review"), the invoice goes out automatically.
+
+**Failed e-mails** are logged and retried by a cron job:
+```
+*/15 * * * *  php /var/www/asl/codebase/bin/send-invoices.php
+```
+
+**E-mail settings** go in `config.php` (`mail_transport`, `mail_from`, `smtp_*`):
+- `smtp` with STARTTLS or SSL and certificate verification. This is the recommended choice; use your mail provider or a service like Postmark, Mailgun or Amazon SES.
+- `mail` uses PHP's `mail()`.
+- `log` writes `.eml` files to `codebase/storage/mail/` for local testing.
+
+**Existing installations:** run `php codebase/bin/install.php` once to add the new invoice columns. It is safe to run repeatedly.
+
 ## Languages
 - The shop lives under `/ar`, `/en` and `/nl`. Arabic is the default and is laid out right-to-left.
 - Nothing is machine-translated. Product names, summaries and descriptions are written by the admin for each language, side by side.
@@ -107,6 +144,7 @@ Quantities are kept as whole milligrams or millilitres, so there is no floating-
 | Malicious uploads | Size limit, magic-byte MIME check, pixel-bomb limit, full GD re-encode (strips payloads and EXIF), random filenames, no execution in `uploads/` |
 | IDOR on orders | Only the browser session that placed an order can see its confirmation |
 | Cookies | Consent cookie is HttpOnly and SameSite=Lax. No optional cookies are set before opt-in. The service worker never caches HTML or non-GET requests |
+| Invoices | The online invoice is reachable only with a 256-bit random token (checked in constant time), is sent with `no-referrer` and `no-store`, and has its own CSP that allows no scripts except the print button. E-mail headers are validated and stripped of line breaks (no header injection). SMTP uses certificate-verified TLS |
 | Transport | HSTS and `upgrade-insecure-requests` when `app_url` is HTTPS |
 
 Operational must-dos: serve over HTTPS only, keep PHP updated, change `admin_path` to something

@@ -11,6 +11,14 @@ final class Settings
         'shipping_countries' => 'NL,BE,DE,FR,LU,AT',
         'contact_email' => '',
         'contact_phone' => '',
+        // Seller details printed on invoices
+        'company_name' => 'Asl',
+        'company_address' => '',
+        'vat_number' => '',
+        'coc_number' => '',
+        // VAT included in prices, in basis points (900 = 9%, the Dutch rate for food)
+        'vat_rate_bp' => '900',
+        'invoice_bcc' => '1',
     ];
 
     private static ?array $cache = null;

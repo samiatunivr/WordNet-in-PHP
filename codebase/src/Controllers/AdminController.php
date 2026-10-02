@@ -8,6 +8,8 @@ use Asl\Db;
 use Asl\Http;
 use Asl\I18n;
 use Asl\ImageUpload;
+use Asl\Invoices;
+use Asl\Mailer;
 use Asl\Money;
 use Asl\Orders;
 use Asl\Products;
@@ -338,12 +340,48 @@ final class AdminController
         if (!in_array($status, Orders::STATUSES, true)) {
             Http::abort(400);
         }
+        $before = Db::one('SELECT status, invoice_sent_at, customer_email FROM orders WHERE id = ?', [$oid]);
+        if (!$before) {
+            Http::abort(404);
+        }
         Db::update('orders', [
             'status' => $status,
             'admin_note' => mb_substr(Http::post('admin_note'), 0, 5000),
             'updated_at' => Db::now(),
         ], 'id = :id', ['id' => $oid]);
         Security::flash('success', t('admin.saved'));
+        // Order confirmed manually (e.g. after review): e-mail the invoice once.
+        if (!in_array($before['status'], Invoices::INVOICEABLE, true) && in_array($status, Invoices::INVOICEABLE, true)
+            && $before['invoice_sent_at'] === null && Mailer::validEmail($before['customer_email'])) {
+            Invoices::queue($oid);
+            Security::flash('info', t('admin.invoice_queued'));
+        }
+        Http::redirect(admin_url('orders/' . $oid));
+    }
+
+    public function invoiceView(string $id): void
+    {
+        $this->boot();
+        $order = Db::one('SELECT * FROM orders WHERE id = ? AND invoice_number IS NOT NULL', [$this->id($id)]);
+        if (!$order) {
+            Http::abort(404);
+        }
+        ShopController::sendInvoiceHeaders();
+        $data = Invoices::viewData($order, Orders::items((int) $order['id']));
+        echo View::capture('invoice/standalone', $data + ['document' => View::capture('invoice/document', $data), 'printable' => true]);
+    }
+
+    public function invoiceSend(string $id): void
+    {
+        $this->boot();
+        $oid = $this->id($id);
+        try {
+            Invoices::send($oid);
+            Security::flash('success', t('admin.invoice_sent_ok'));
+        } catch (\Throwable $e) {
+            Orders::log("Manual invoice send for order $oid failed: " . $e->getMessage());
+            Security::flash('error', t('admin.invoice_failed'));
+        }
         Http::redirect(admin_url('orders/' . $oid));
     }
 
@@ -427,6 +465,11 @@ final class AdminController
         if ($email !== '' && !filter_var($email, FILTER_VALIDATE_EMAIL)) {
             $errors[] = t('admin.err_email');
         }
+        $vat = str_replace(',', '.', Http::post('vat_rate'));
+        if (!preg_match('/^\d{1,2}(\.\d{1,2})?$/', $vat)) {
+            $errors[] = t('admin.err_vat_rate');
+        }
+        $vatBp = (int) round((float) $vat * 100);
         if ($errors) {
             foreach ($errors as $err) {
                 Security::flash('error', $err);
@@ -438,6 +481,12 @@ final class AdminController
         Settings::set('shipping_countries', $countries);
         Settings::set('contact_email', $email);
         Settings::set('contact_phone', mb_substr(preg_replace('/[^0-9+ ()-]/', '', Http::post('contact_phone')) ?? '', 0, 40));
+        Settings::set('company_name', mb_substr(Http::post('company_name'), 0, 190));
+        Settings::set('company_address', mb_substr(str_replace("\r\n", "\n", Http::post('company_address')), 0, 1000));
+        Settings::set('vat_number', mb_substr(strtoupper(preg_replace('/\s+/', '', Http::post('vat_number')) ?? ''), 0, 40));
+        Settings::set('coc_number', mb_substr(preg_replace('/[^0-9A-Za-z]/', '', Http::post('coc_number')) ?? '', 0, 40));
+        Settings::set('vat_rate_bp', (string) $vatBp);
+        Settings::set('invoice_bcc', Http::post('invoice_bcc') === '1' ? '1' : '0');
         Security::flash('success', t('admin.saved'));
         Http::redirect(admin_url('settings'));
     }
