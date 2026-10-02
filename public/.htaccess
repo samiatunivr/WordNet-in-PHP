@@ -28,3 +28,11 @@ ServerSignature Off
         Header set Cache-Control "public, max-age=604800"
     </FilesMatch>
 </IfModule>
+
+# PWA: the service worker must always be revalidated so updates reach installed apps
+<Files "sw.js">
+    <IfModule mod_headers.c>
+        Header set Cache-Control "no-cache"
+        Header set Service-Worker-Allowed "/"
+    </IfModule>
+</Files>

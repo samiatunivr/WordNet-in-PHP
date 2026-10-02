@@ -56,6 +56,22 @@ Local testing: `stripe listen --forward-to localhost:8000/stripe/webhook`.
 - Every storefront text (hero, about, buttons, messages, units…) has a hand-written default in `codebase/lang/*.php`, and the admin can change any of them for each language under **Admin › Texts**.
 - The admin panel itself can be switched between the three languages.
 
+## Installable app (PWA)
+Customers can install the shop on their phone's home screen, where it opens full screen like a native app:
+- On Android and Chrome/Edge, an **Install app** button appears in the header (using the browser's own install prompt).
+- On iPhone and iPad, the button shows the Safari steps (Share → Add to Home Screen).
+- The app manifest (`/{lang}/manifest.webmanifest`) is localised, so the installed app's name and text direction match the language the customer installed it from.
+- `public/sw.js` caches only static files and product images. Pages are always fetched fresh, so prices, cart and security tokens are never stale. Without a connection the customer sees a translated offline page.
+- Installation requires HTTPS (or `localhost` for testing). After changing CSS, JS or icons, raise `VERSION` in `public/sw.js` so installed apps pick up the new files.
+- The icons in `public/assets/img/` (`icon-192.png`, `icon-512.png`, `icon-maskable-512.png`, `apple-touch-icon.png`) are made from `logo.svg`. Replace them with your own artwork if you like.
+
+## Cookie consent
+A consent banner appears on the first visit, with **Accept all**, **Only essential** and **Customise** choices. It works without JavaScript.
+- `/{lang}/cookies` holds the cookie policy and a preferences form. The footer link "Cookie settings" lets visitors change their choice at any time.
+- The choice is stored for 6 months in the `asl_consent` cookie. Raise `Consent::VERSION` when the policy changes so everyone is asked again.
+- The shop itself only sets **essential** cookies (the session for cart, checkout and security, plus the consent cookie), which are allowed without consent under the GDPR/ePrivacy rules. The *Statistics* and *Marketing* categories are opt-in. If you ever add analytics or marketing scripts, load them only when `Asl\Consent::allows('analytics')` or `allows('marketing')` returns true.
+- All banner and policy texts can be edited in the three languages under Admin › Texts.
+
 ## Quantities and pricing
 Each product has a price per kg and/or per litre, and the admin chooses which units customers can buy in.
 Quantities are kept as whole milligrams or millilitres, so there is no floating-point rounding. The line price is
@@ -77,6 +93,7 @@ Quantities are kept as whole milligrams or millilitres, so there is no floating-
 | Card data | Never touches the server. Stripe-hosted Checkout |
 | Malicious uploads | Size limit, magic-byte MIME check, pixel-bomb limit, full GD re-encode (strips payloads and EXIF), random filenames, no execution in `uploads/` |
 | IDOR on orders | Only the browser session that placed an order can see its confirmation |
+| Cookies | Consent cookie is HttpOnly and SameSite=Lax. No optional cookies are set before opt-in. The service worker never caches HTML or non-GET requests |
 | Transport | HSTS and `upgrade-insecure-requests` when `app_url` is HTTPS |
 
 Operational must-dos: serve over HTTPS only, keep PHP updated, change `admin_path` to something

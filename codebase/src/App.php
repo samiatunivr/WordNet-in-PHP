@@ -55,6 +55,10 @@ final class App
             $r->post("/$l/checkout", [$shop, 'checkout']);
             $r->get("/$l/checkout/success", [$shop, 'success']);
             $r->get("/$l/checkout/cancel", [$shop, 'cancel']);
+            $r->get("/$l/cookies", [$shop, 'cookies']);
+            $r->post("/$l/cookies", [$shop, 'consentSave']);
+            $r->get("/$l/offline", [$shop, 'offline']);
+            $r->get("/$l/manifest.webmanifest", [$shop, 'manifest']);
         }
 
         $a = '/' . Config::adminPath();

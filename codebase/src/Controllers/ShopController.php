@@ -5,6 +5,7 @@ namespace Asl\Controllers;
 
 use Asl\Cart;
 use Asl\Config;
+use Asl\Consent;
 use Asl\Db;
 use Asl\Http;
 use Asl\I18n;
@@ -217,5 +218,66 @@ final class ShopController
         $this->boot();
         Security::flash('info', t('checkout.cancelled'));
         Http::redirect(url('cart'));
+    }
+
+    public function cookies(): void
+    {
+        $this->boot();
+        View::render('shop/cookies', ['title' => t('cookies.title'), 'consent' => Consent::current()]);
+    }
+
+    public function consentSave(): void
+    {
+        $this->boot();
+        $choice = Http::post('choice');
+        $choices = match ($choice) {
+            'all' => ['analytics' => true, 'marketing' => true],
+            'custom' => ['analytics' => Http::post('analytics') === '1', 'marketing' => Http::post('marketing') === '1'],
+            default => ['analytics' => false, 'marketing' => false],
+        };
+        Consent::store($choices);
+        Security::flash('success', t('cookies.saved'));
+        $back = Http::post('back');
+        $local = preg_match('#^/(ar|en|nl)(/[A-Za-z0-9/_\-.]*)?$#', $back) === 1;
+        Http::redirect($local ? $back : url(''));
+    }
+
+    /** Minimal page the service worker shows when the device is offline. */
+    public function offline(): void
+    {
+        $this->boot();
+        View::render('offline', ['title' => t('pwa.offline_title')], null);
+    }
+
+    /** Web app manifest, localised so the installed app carries the visitor's language. */
+    public function manifest(): void
+    {
+        $this->boot();
+        header('Content-Type: application/manifest+json; charset=utf-8');
+        header('Cache-Control: public, max-age=3600');
+        echo json_encode([
+            'id' => '/?app=asl',
+            'name' => t('site.name') . ' — ' . t('site.tagline_short'),
+            'short_name' => t('site.name'),
+            'description' => t('site.tagline'),
+            'lang' => $this->locale,
+            'dir' => I18n::dir(),
+            'start_url' => url('') . '?source=pwa',
+            'scope' => '/',
+            'display' => 'standalone',
+            'orientation' => 'portrait',
+            'background_color' => '#fffaf1',
+            'theme_color' => '#e8a317',
+            'categories' => ['shopping', 'food'],
+            'icons' => [
+                ['src' => '/assets/img/icon-192.png', 'sizes' => '192x192', 'type' => 'image/png', 'purpose' => 'any'],
+                ['src' => '/assets/img/icon-512.png', 'sizes' => '512x512', 'type' => 'image/png', 'purpose' => 'any'],
+                ['src' => '/assets/img/icon-maskable-512.png', 'sizes' => '512x512', 'type' => 'image/png', 'purpose' => 'maskable'],
+            ],
+            'shortcuts' => [
+                ['name' => t('nav.shop'), 'url' => url('') . '#shop', 'icons' => [['src' => '/assets/img/icon-192.png', 'sizes' => '192x192']]],
+                ['name' => t('nav.cart'), 'url' => url('cart'), 'icons' => [['src' => '/assets/img/icon-192.png', 'sizes' => '192x192']]],
+            ],
+        ], JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT);
     }
 }

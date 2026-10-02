@@ -49,3 +49,43 @@
     });
   });
 })();
+
+// ---- Installable app (PWA)
+(function () {
+  'use strict';
+  if ('serviceWorker' in navigator && window.isSecureContext) {
+    window.addEventListener('load', function () {
+      navigator.serviceWorker.register('/sw.js', { scope: '/' }).catch(function () {});
+    });
+  }
+
+  var btn = document.querySelector('[data-install]');
+  var help = document.querySelector('[data-install-help]');
+  if (!btn) return;
+  var standalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
+  if (standalone) return;
+
+  var deferred = null;
+  window.addEventListener('beforeinstallprompt', function (ev) {
+    ev.preventDefault();
+    deferred = ev;
+    btn.hidden = false;
+  });
+  window.addEventListener('appinstalled', function () { btn.hidden = true; deferred = null; });
+
+  // iOS Safari has no install prompt: show manual "Add to Home Screen" instructions.
+  var ua = navigator.userAgent;
+  var isIOS = /iPad|iPhone|iPod/.test(ua) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+  if (isIOS) btn.hidden = false;
+
+  btn.addEventListener('click', function () {
+    if (deferred) {
+      deferred.prompt();
+      deferred.userChoice.finally(function () { deferred = null; btn.hidden = true; });
+    } else if (help) {
+      help.hidden = false;
+    }
+  });
+  var close = document.querySelector('[data-install-close]');
+  if (close) close.addEventListener('click', function () { help.hidden = true; });
+})();

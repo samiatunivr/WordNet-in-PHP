@@ -12,7 +12,7 @@ final class Security
     {
         header_remove('X-Powered-By');
         header("Content-Security-Policy: default-src 'self'; script-src 'self'; style-src 'self'; "
-            . "img-src 'self' data:; font-src 'self'; connect-src 'self'; object-src 'none'; "
+            . "img-src 'self' data:; font-src 'self'; connect-src 'self'; manifest-src 'self'; worker-src 'self'; object-src 'none'; "
             . "base-uri 'none'; frame-ancestors 'none'; form-action 'self' https://checkout.stripe.com"
             . (Config::isHttps() ? '; upgrade-insecure-requests' : ''));
         header('X-Content-Type-Options: nosniff');
