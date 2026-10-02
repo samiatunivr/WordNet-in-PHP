@@ -6,7 +6,7 @@
  * Bump VERSION when CSS/JS/icons change so installed apps pick them up.
  */
 'use strict';
-const VERSION = 'asl-v1';
+const VERSION = 'asl-v2';
 const STATIC_CACHE = VERSION + '-static';
 const LOCALES = ['ar', 'en', 'nl'];
 const PRECACHE = [

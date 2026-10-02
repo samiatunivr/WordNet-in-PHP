@@ -37,6 +37,19 @@ final class ShopController
         View::render('shop/home', ['title' => t('home.title'), 'products' => Products::active()]);
     }
 
+    public function shop(): void
+    {
+        $this->boot();
+        View::render('shop/shop', ['title' => t('nav.shop'), 'products' => Products::active()]);
+    }
+
+    /** App-style "More" tab: language, install, cookies, contact. */
+    public function more(): void
+    {
+        $this->boot();
+        View::render('shop/more', ['title' => t('nav.more')]);
+    }
+
     public function product(string $slug): void
     {
         $this->boot();
@@ -275,7 +288,7 @@ final class ShopController
                 ['src' => '/assets/img/icon-maskable-512.png', 'sizes' => '512x512', 'type' => 'image/png', 'purpose' => 'maskable'],
             ],
             'shortcuts' => [
-                ['name' => t('nav.shop'), 'url' => url('') . '#shop', 'icons' => [['src' => '/assets/img/icon-192.png', 'sizes' => '192x192']]],
+                ['name' => t('nav.shop'), 'url' => url('shop'), 'icons' => [['src' => '/assets/img/icon-192.png', 'sizes' => '192x192']]],
                 ['name' => t('nav.cart'), 'url' => url('cart'), 'icons' => [['src' => '/assets/img/icon-192.png', 'sizes' => '192x192']]],
             ],
         ], JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT);

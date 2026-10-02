@@ -65,6 +65,19 @@ Customers can install the shop on their phone's home screen, where it opens full
 - Installation requires HTTPS (or `localhost` for testing). After changing CSS, JS or icons, raise `VERSION` in `public/sw.js` so installed apps pick up the new files.
 - The icons in `public/assets/img/` (`icon-192.png`, `icon-512.png`, `icon-maskable-512.png`, `apple-touch-icon.png`) are made from `logo.svg`. Replace them with your own artwork if you like.
 
+## App look on phones
+On screens up to 768px wide, and in the installed app, the storefront switches to a native-app layout:
+- **App bar:** logo and compact language switch (ع / EN / NL). Inner pages get a back button and the page title.
+- **Bottom tab bar:** Home, Shop, Cart (with item badge) and More. More is a settings-style screen with language, install app, our story, cookie settings and contact.
+- **Product page:** full-width swipeable photo carousel with dots, and a fixed bar with the live price and **Add to cart**.
+- **Cart:** fixed checkout bar with the total.
+- **Messages:** shown as toasts. Success messages fade out; errors stay until tapped.
+- **Lists:** 2-column product grid and swipeable feature cards.
+- **Polish:** smooth page transitions (View Transitions, switched off for reduced-motion users), safe-area support for notched phones, and no text selection on app chrome when installed.
+- **Admin:** on phones the admin gets a sticky header with a swipeable section bar.
+
+Desktop keeps the regular website layout.
+
 ## Cookie consent
 A consent banner appears on the first visit, with **Accept all**, **Only essential** and **Customise** choices. It works without JavaScript.
 - `/{lang}/cookies` holds the cookie policy and a preferences form. The footer link "Cookie settings" lets visitors change their choice at any time.

@@ -11,7 +11,8 @@ $nav = ['' => 'admin.dashboard', 'products' => 'admin.products', 'orders' => 'ad
 <html lang="<?= e(I18n::locale()) ?>" dir="<?= e(I18n::dir()) ?>">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#2f1d07">
 <meta name="robots" content="noindex, nofollow">
 <title><?= e(($title ?? '') . ' · ' . t('site.name') . ' Admin') ?></title>
 <link rel="icon" href="/assets/img/logo.svg" type="image/svg+xml">

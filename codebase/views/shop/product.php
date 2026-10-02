@@ -10,11 +10,23 @@ $lt = $product['price_per_l_cents'];
 <div class="wrap product-page">
   <nav class="crumbs" aria-label="<?= e(t('nav.breadcrumb')) ?>">
     <a href="<?= e(url('')) ?>"><?= e(t('nav.home')) ?></a> <span aria-hidden="true">›</span>
-    <a href="<?= e(url('') . '#shop') ?>"><?= e(t('nav.shop')) ?></a> <span aria-hidden="true">›</span>
+    <a href="<?= e(url('shop')) ?>"><?= e(t('nav.shop')) ?></a> <span aria-hidden="true">›</span>
     <span aria-current="page"><?= e($name) ?></span>
   </nav>
 
   <div class="product-layout">
+    <div class="carousel" aria-label="<?= e($name) ?>">
+      <div class="carousel-track" data-carousel>
+        <?php foreach ($images ?: [['filename' => null]] as $i => $img): ?>
+          <img src="<?= e(Products::imageUrl($img['filename'])) ?>" alt="<?= e($i === 0 ? $name : '') ?>"<?= $i > 0 ? ' loading="lazy"' : '' ?>>
+        <?php endforeach; ?>
+      </div>
+      <?php if (count($images) > 1): ?>
+        <div class="carousel-dots" aria-hidden="true">
+          <?php foreach ($images as $i => $img): ?><span<?= $i === 0 ? ' class="active"' : '' ?>></span><?php endforeach; ?>
+        </div>
+      <?php endif; ?>
+    </div>
     <div class="gallery" data-gallery>
       <div class="gallery-main">
         <img src="<?= e(Products::imageUrl($images[0]['filename'] ?? null)) ?>" alt="<?= e($name) ?>" data-gallery-main>
@@ -61,9 +73,9 @@ $lt = $product['price_per_l_cents'];
               </select>
             </label>
           </div>
-          <p class="estimate" aria-live="polite"><?= e(t('product.estimate')) ?>: <strong data-estimate>—</strong></p>
           <p class="hint"><?= e(t('product.quantity_hint')) ?></p>
           <div class="buy-actions">
+            <p class="estimate" aria-live="polite"><span class="estimate-label"><?= e(t('product.estimate')) ?></span> <strong data-estimate>—</strong></p>
             <button class="btn btn-large" type="submit" name="go" value="stay"><?= e(t('product.add_to_cart')) ?></button>
             <button class="btn btn-outline btn-large" type="submit" name="go" value="cart"><?= e(t('product.buy_now')) ?></button>
           </div>

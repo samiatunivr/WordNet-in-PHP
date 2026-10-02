@@ -12,6 +12,7 @@ final class I18n
 {
     public const LOCALES = ['ar', 'en', 'nl'];
     public const NAMES = ['ar' => 'العربية', 'en' => 'English', 'nl' => 'Nederlands'];
+    public const SHORT = ['ar' => 'ع', 'en' => 'EN', 'nl' => 'NL'];
     public const DEFAULT = 'ar';
 
     private static string $locale = self::DEFAULT;

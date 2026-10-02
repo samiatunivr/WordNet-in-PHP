@@ -47,6 +47,8 @@ final class App
         foreach (I18n::LOCALES as $l) {
             $shop = new ShopController($l);
             $r->get("/$l", [$shop, 'home']);
+            $r->get("/$l/shop", [$shop, 'shop']);
+            $r->get("/$l/more", [$shop, 'more']);
             $r->get("/$l/product/{slug}", [$shop, 'product']);
             $r->get("/$l/cart", [$shop, 'cart']);
             $r->post("/$l/cart/add", [$shop, 'cartAdd']);

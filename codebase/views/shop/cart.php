@@ -9,7 +9,7 @@ use Asl\Units;
   <?php if (!$cart['lines']): ?>
     <div class="empty-box">
       <p><?= e(t('cart.empty')) ?></p>
-      <a class="btn" href="<?= e(url('') . '#shop') ?>"><?= e(t('cart.continue')) ?></a>
+      <a class="btn" href="<?= e(url('shop')) ?>"><?= e(t('cart.continue')) ?></a>
     </div>
   <?php else: ?>
     <div class="cart-layout">
@@ -58,6 +58,12 @@ use Asl\Units;
         </form>
         <p class="secure-note"><?= e(t('cart.secure_note')) ?></p>
       </aside>
+
+      <form class="checkout-bar" method="post" action="<?= e(url('checkout')) ?>">
+        <?= csrf_field() ?>
+        <span class="checkout-bar-total"><small><?= e(t('cart.total')) ?></small> <strong><?= e(money($cart['total'])) ?></strong></span>
+        <button class="btn" type="submit"><?= e(t('cart.checkout_short')) ?></button>
+      </form>
     </div>
   <?php endif; ?>
 </div>

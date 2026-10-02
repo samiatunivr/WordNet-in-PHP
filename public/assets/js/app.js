@@ -59,33 +59,77 @@
     });
   }
 
-  var btn = document.querySelector('[data-install]');
+  var btns = Array.prototype.slice.call(document.querySelectorAll('[data-install]'));
+  var rows = document.querySelectorAll('[data-install-row]');
   var help = document.querySelector('[data-install-help]');
-  if (!btn) return;
+  if (!btns.length) return;
   var standalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
   if (standalone) return;
+  function show(on) {
+    btns.forEach(function (b) { b.hidden = !on; });
+    rows.forEach(function (r) { r.hidden = !on; });
+  }
 
   var deferred = null;
   window.addEventListener('beforeinstallprompt', function (ev) {
     ev.preventDefault();
     deferred = ev;
-    btn.hidden = false;
+    show(true);
   });
-  window.addEventListener('appinstalled', function () { btn.hidden = true; deferred = null; });
+  window.addEventListener('appinstalled', function () { show(false); deferred = null; });
 
   // iOS Safari has no install prompt: show manual "Add to Home Screen" instructions.
   var ua = navigator.userAgent;
   var isIOS = /iPad|iPhone|iPod/.test(ua) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
-  if (isIOS) btn.hidden = false;
+  if (isIOS) show(true);
 
-  btn.addEventListener('click', function () {
-    if (deferred) {
-      deferred.prompt();
-      deferred.userChoice.finally(function () { deferred = null; btn.hidden = true; });
-    } else if (help) {
-      help.hidden = false;
-    }
+  btns.forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      if (deferred) {
+        deferred.prompt();
+        deferred.userChoice.finally(function () { deferred = null; show(false); });
+      } else if (help) {
+        help.hidden = false;
+      }
+    });
   });
   var close = document.querySelector('[data-install-close]');
   if (close) close.addEventListener('click', function () { help.hidden = true; });
+})();
+
+// ---- App shell behaviour
+(function () {
+  'use strict';
+
+  // App-bar back button: go back in history when we came from this shop.
+  document.querySelectorAll('[data-back]').forEach(function (a) {
+    a.addEventListener('click', function (ev) {
+      try {
+        if (document.referrer && new URL(document.referrer).origin === location.origin && history.length > 1) {
+          ev.preventDefault();
+          history.back();
+        }
+      } catch (e) { /* fall back to the link */ }
+    });
+  });
+
+  // Toasts: success/info messages fade out; errors stay until tapped.
+  document.querySelectorAll('[data-toasts] .flash').forEach(function (el) {
+    function dismiss() {
+      el.classList.add('hide');
+      setTimeout(function () { el.remove(); }, 350);
+    }
+    el.addEventListener('click', dismiss);
+    if (!el.classList.contains('flash-error')) setTimeout(dismiss, 3500);
+  });
+
+  // Swipe gallery dots
+  document.querySelectorAll('[data-carousel]').forEach(function (track) {
+    var dots = track.parentNode.querySelectorAll('.carousel-dots span');
+    if (!dots.length) return;
+    track.addEventListener('scroll', function () {
+      var i = Math.round(Math.abs(track.scrollLeft) / track.clientWidth);
+      dots.forEach(function (d, j) { d.classList.toggle('active', i === j); });
+    }, { passive: true });
+  });
 })();

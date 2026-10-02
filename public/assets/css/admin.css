@@ -62,3 +62,17 @@ body.admin { background: #f8f4ec; }
   .lang-columns, .form-row, .two-col { grid-template-columns: 1fr; }
   .stats { grid-template-columns: repeat(2, 1fr); }
 }
+
+/* Admin on phones: app-like header with a swipeable section bar */
+@media (max-width: 768px) {
+  .admin-header { padding: max(8px, env(safe-area-inset-top)) 12px 0; gap: 8px; position: sticky; top: 0; z-index: 30; }
+  .admin-nav { order: 3; width: calc(100% + 24px); margin-inline: -12px; padding: 4px 12px 8px; flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; }
+  .admin-nav::-webkit-scrollbar { display: none; }
+  .admin-nav a { white-space: nowrap; flex: none; }
+  .admin-nav a.active { background: var(--honey); color: #2b1600; }
+  .admin-tools { gap: 8px; }
+  .admin-tools .link-button { font-size: .8rem; }
+  .admin-main { margin-top: 16px; padding-bottom: env(safe-area-inset-bottom); }
+  .admin-form fieldset { padding: 14px; }
+  .page-head .btn { padding: .5em 1em; }
+}
